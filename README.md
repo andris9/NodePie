@@ -52,7 +52,7 @@ Usage
 Feed level methods
 ------------------
 
-### init()
+### -init()
 
 **nodepie.init()**
 
@@ -77,7 +77,7 @@ Usage:
 
 Returns `false` if the title is not found from the feed
 
-### getDescription()
+### -getDescription()
 
 **nodepie.getDescription()** -> String
 
@@ -91,7 +91,7 @@ Usage:
 
 Returns `false` if the description is not found from the feed
 
-### getPermalink()
+### -getPermalink()
 
 **nodepie.getPermalink()** -> String
 
@@ -105,7 +105,7 @@ Usage:
 
 Returns `false` if the url is not found from the feed
 
-### getHub()
+### -getHub()
 
 **nodepie.getHub()** -> String
 
@@ -119,7 +119,7 @@ Usage:
 
 Returns `false` if the hub is not found from the feed
 
-### getDate()
+### -getDate()
 
 **nodepie.getDate()** -> Date
 
@@ -134,7 +134,7 @@ Usage:
 
 Returns `false` if the date is not found from the feed or if it's in invalid format
 
-### getItemQuantity()
+### -getItemQuantity()
 
 **nodepie.getItemQuantity([max])** -> Number
 
@@ -150,7 +150,7 @@ Usage:
     feed.init();
     total_entries = feed.getItemQuantity();
 
-### getItems()
+### -getItems()
 
 **nodepie.getItems([start [,length]])** -> Array
 
@@ -168,7 +168,7 @@ Usage:
     // fetch the first 3 entries from the feed
     items = feed.getItems(0, feed.getItemQuantity(3));
 
-### getItem()
+### -getItem()
 
 **nodepie.getItems(i)** -> Array
 
