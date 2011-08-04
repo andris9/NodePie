@@ -41,7 +41,7 @@ API
 Constructor
 -----------
 
-**new NodePie(xml [, options])**
+**new NodePie(xml[, options])**
 
 Where
 
