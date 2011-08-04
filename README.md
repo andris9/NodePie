@@ -8,6 +8,10 @@ Installation
 
     npm install nodepie
 
+Compatibility
+-------------
+
+Good for UTF-8 encoded RSS0.92, RSS2.0, RDF and Atom1.0 feeds. 
 
 Usage
 -----
@@ -183,4 +187,142 @@ Usage:
     var feed = new NodePie(xml_contents);
     feed.init();
     // fetch the first entry from the feed
-    item = feed.getItem(0); 
+    item = feed.getItem(0);
+
+Item level methods
+------------------
+
+### - getPermalink()
+
+**item.getPermalink()** -> String
+
+Fetches the link of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    url = item.getPermalink();
+
+Returns `false` if the url is not found from the entry
+
+### - getAuthor()
+
+**item.getAuthor()** -> String
+
+Fetches the (first) author of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    author = item.getAuthor();
+
+Returns `false` if no authors are not found from the entry
+
+### - getAuthors()
+
+**item.getAuthors()** -> Array
+
+Fetches the authors of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    authors = item.getAuthors();
+
+### - getTitle()
+
+**item.getTitle()** -> String
+
+Fetches the title of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    title = item.getTitle();
+
+Returns `false` if the title is not found from the entry
+
+### - getDate()
+
+**item.getDate()** -> Date
+
+Fetches the date of the entry as a Date object
+
+Usage:
+
+    var item = feed.getItem(0);
+    date = item.getDate();
+    console.log(date.getFullYear());
+
+Returns `false` if the date is not found from the entry or if it's in invalid format
+
+### - getDescription()
+
+**item.getDescription()** -> String
+
+Fetches the description of the entry. Prefers summaries, otherwise falls back to full content.
+
+Usage:
+
+    var item = feed.getItem(0);
+    description = item.getDescription();
+
+Returns `false` if the description or contents are not found from the entry
+
+### - getContents()
+
+**item.getContents()** -> String
+
+Fetches the contents of the entry. Prefers full text, otherwise falls back to description.
+
+Usage:
+
+    var item = feed.getItem(0);
+    contents = item.getContents();
+
+Returns `false` if the description or contents are not found from the entry
+
+### - getCategory()
+
+**item.getCategory()** -> String
+
+Fetches the (first) category of the entry.
+
+Usage:
+
+    var item = feed.getItem(0);
+    category = item.getCategory();
+
+Returns `false` if no categories are found from the entry
+
+### - getCategories()
+
+**item.getCategories()** -> Array
+
+Fetches the categories for the entry as an array.
+
+Usage:
+
+    var item = feed.getItem(0);
+    categories = item.getCategories();
+
+Returns `false` if the categories are not found from the entry
+
+### - getComments()
+
+**item.getComments()** -> Object
+
+Fetches an object containing links to the HTML comments page and to an Atom/RSS feed of comments for the post
+
+    {
+        html: "http://link_to_html_page",
+        feed: "http://link_to_comments_feed"
+    }
+
+Usage:
+
+    var item = feed.getItem(0);
+    comments = item.getComments();
+    console.log("See all comments: " + comments.html);
+
+Returns `false` if the no information about comments is found from the entry
