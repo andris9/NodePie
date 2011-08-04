@@ -67,65 +67,9 @@ Usage:
      var feed = new NodePie(xml_contents);
      feed.init();
 
-### - getTitle()
-
-**nodepie.getTitle()** -> String
-
-Fetches the title of the feed
-
-Usage:
-
-    var feed = new NodePie(xml_contents);
-    feed.init();
-    title = feed.getTitle();
-
-Returns `false` if the title is not found from the feed
-
-### - getDescription()
-
-**nodepie.getDescription()** -> String
-
-Fetches the description of the feed
-
-Usage:
-
-    var feed = new NodePie(xml_contents);
-    feed.init();
-    description = feed.getDescription();
-
-Returns `false` if the description is not found from the feed
-
-### - getPermalink()
-
-**nodepie.getPermalink()** -> String
-
-Fetches the link of the blog
-
-Usage:
-
-    var feed = new NodePie(xml_contents);
-    feed.init();
-    url = feed.getPermalink();
-
-Returns `false` if the url is not found from the feed
-
-### - getHub()
-
-**nodepie.getHub()** -> String
-
-Fetches the [PubSubHubbub](http://code.google.com/p/pubsubhubbub/) hub of the feed
-
-Usage:
-
-    var feed = new NodePie(xml_contents);
-    feed.init();
-    hub = feed.getHub();
-
-Returns `false` if the hub is not found from the feed
-
 ### - getDate()
 
-**nodepie.getDate()** -> Date
+**nodepie.getDate()** → Date
 
 Fetches the update date of the feed and returns it as a Date object
 
@@ -138,25 +82,54 @@ Usage:
 
 Returns `false` if the date is not found from the feed or if it's in invalid format
 
-### - getItemQuantity()
+### - getDescription()
 
-**nodepie.getItemQuantity([max])** -> Number
+**nodepie.getDescription()** → String
 
-Where
-
-  * `max` is the maximum number to report
-
-Returns the number of entries in the feed
+Fetches the description of the feed
 
 Usage:
 
     var feed = new NodePie(xml_contents);
     feed.init();
-    total_entries = feed.getItemQuantity();
+    description = feed.getDescription();
+
+Returns `false` if the description is not found from the feed
+
+### - getHub()
+
+**nodepie.getHub()** → String
+
+Fetches the [PubSubHubbub](http://code.google.com/p/pubsubhubbub/) hub of the feed
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    hub = feed.getHub();
+
+Returns `false` if the hub is not found from the feed
+
+### - getItem()
+
+**nodepie.getItems(i)** → Array
+
+Where
+
+  * `i` is the index of the entry
+
+Fetches a `NodePie.Item` object from defined index or `false` if the query is out of bounds
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    // fetch the first entry from the feed
+    item = feed.getItem(0);
 
 ### - getItems()
 
-**nodepie.getItems([start [,length]])** -> Array
+**nodepie.getItems([start [,length]])** → Array
 
 Where
 
@@ -172,42 +145,59 @@ Usage:
     // fetch the first 3 entries from the feed
     items = feed.getItems(0, feed.getItemQuantity(3));
 
-### - getItem()
+### - getItemQuantity()
 
-**nodepie.getItems(i)** -> Array
+**nodepie.getItemQuantity([max])** → Number
 
 Where
 
-  * `i` is the index of the entry
+  * `max` is the maximum number to report
 
-Fetches a `NodePie.Item` object from defined index or `false` if the query is out of bounds
+Returns the number of entries in the feed
 
 Usage:
 
     var feed = new NodePie(xml_contents);
     feed.init();
-    // fetch the first entry from the feed
-    item = feed.getItem(0);
+    total_entries = feed.getItemQuantity();
+
+### - getPermalink()
+
+**nodepie.getPermalink()** → String
+
+Fetches the link of the blog
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    url = feed.getPermalink();
+
+Returns `false` if the url is not found from the feed
+
+
+
+### - getTitle()
+
+**nodepie.getTitle()** → String
+
+Fetches the title of the feed
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    title = feed.getTitle();
+
+Returns `false` if the title is not found from the feed
+
 
 Item level methods
 ------------------
 
-### - getPermalink()
-
-**item.getPermalink()** -> String
-
-Fetches the link of the entry
-
-Usage:
-
-    var item = feed.getItem(0);
-    url = item.getPermalink();
-
-Returns `false` if the url is not found from the entry
-
 ### - getAuthor()
 
-**item.getAuthor()** -> String
+**item.getAuthor()** → String
 
 Fetches the (first) author of the entry
 
@@ -220,7 +210,7 @@ Returns `false` if no authors are not found from the entry
 
 ### - getAuthors()
 
-**item.getAuthors()** -> Array
+**item.getAuthors()** → Array
 
 Fetches the authors of the entry
 
@@ -229,62 +219,9 @@ Usage:
     var item = feed.getItem(0);
     authors = item.getAuthors();
 
-### - getTitle()
-
-**item.getTitle()** -> String
-
-Fetches the title of the entry
-
-Usage:
-
-    var item = feed.getItem(0);
-    title = item.getTitle();
-
-Returns `false` if the title is not found from the entry
-
-### - getDate()
-
-**item.getDate()** -> Date
-
-Fetches the date of the entry as a Date object
-
-Usage:
-
-    var item = feed.getItem(0);
-    date = item.getDate();
-    console.log(date.getFullYear());
-
-Returns `false` if the date is not found from the entry or if it's in invalid format
-
-### - getDescription()
-
-**item.getDescription()** -> String
-
-Fetches the description of the entry. Prefers summaries, otherwise falls back to full content.
-
-Usage:
-
-    var item = feed.getItem(0);
-    description = item.getDescription();
-
-Returns `false` if the description or contents are not found from the entry
-
-### - getContents()
-
-**item.getContents()** -> String
-
-Fetches the contents of the entry. Prefers full text, otherwise falls back to description.
-
-Usage:
-
-    var item = feed.getItem(0);
-    contents = item.getContents();
-
-Returns `false` if the description or contents are not found from the entry
-
 ### - getCategory()
 
-**item.getCategory()** -> String
+**item.getCategory()** → String
 
 Fetches the (first) category of the entry.
 
@@ -297,7 +234,7 @@ Returns `false` if no categories are found from the entry
 
 ### - getCategories()
 
-**item.getCategories()** -> Array
+**item.getCategories()** → Array
 
 Fetches the categories for the entry as an array.
 
@@ -310,7 +247,7 @@ Returns `false` if the categories are not found from the entry
 
 ### - getComments()
 
-**item.getComments()** -> Object
+**item.getComments()** → Object
 
 Fetches an object containing links to the HTML comments page and to an Atom/RSS feed of comments for the post
 
@@ -326,3 +263,69 @@ Usage:
     console.log("See all comments: " + comments.html);
 
 Returns `false` if the no information about comments is found from the entry
+
+### - getContents()
+
+**item.getContents()** → String
+
+Fetches the contents of the entry. Prefers full text, otherwise falls back to description.
+
+Usage:
+
+    var item = feed.getItem(0);
+    contents = item.getContents();
+
+Returns `false` if the description or contents are not found from the entry
+
+### - getDate()
+
+**item.getDate()** → Date
+
+Fetches the date of the entry as a Date object
+
+Usage:
+
+    var item = feed.getItem(0);
+    date = item.getDate();
+    console.log(date.getFullYear());
+
+Returns `false` if the date is not found from the entry or if it's in invalid format
+
+### - getDescription()
+
+**item.getDescription()** → String
+
+Fetches the description of the entry. Prefers summaries, otherwise falls back to full content.
+
+Usage:
+
+    var item = feed.getItem(0);
+    description = item.getDescription();
+
+Returns `false` if the description or contents are not found from the entry
+
+### - getPermalink()
+
+**item.getPermalink()** → String
+
+Fetches the link of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    url = item.getPermalink();
+
+Returns `false` if the url is not found from the entry
+
+### - getTitle()
+
+**item.getTitle()** → String
+
+Fetches the title of the entry
+
+Usage:
+
+    var item = feed.getItem(0);
+    title = item.getTitle();
+
+Returns `false` if the title is not found from the entry
