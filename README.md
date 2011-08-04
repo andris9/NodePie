@@ -15,6 +15,12 @@ Good for UTF-8 encoded RSS0.92, RSS2.0, RDF and Atom1.0 feeds.
 
 Tested against [Wordpress](http://wordpress.com/), [Blogger](http://www.blogger.com/) and [Feedburner](http://feedburner.com/) feeds.
 
+Issues
+------
+
+[xml2json](https://github.com/buglabs/node-xml2json) on which NodePie depends on has a bug with CDATA text elements. Until it is fixed it is better to use
+a [patched version](https://github.com/andris9/node-xml2json) of the same library.
+
 Usage
 -----
 
