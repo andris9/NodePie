@@ -1,6 +1,6 @@
 var http = require("http"),
     urllib = require("url"),
-    NodePie = require("./nodepie");
+    NodePie = require("../lib/nodepie");
 
 var feed_url = "http://techcrunch.com/feed/";
 
