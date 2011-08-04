@@ -13,6 +13,8 @@ Compatibility
 
 Good for UTF-8 encoded RSS0.92, RSS2.0, RDF and Atom1.0 feeds. 
 
+Tested against [Wordpress](http://wordpress.com/), [Blogger](http://www.blogger.com/) and [Feedburner](http://feedburner.com/) feeds.
+
 Usage
 -----
 
