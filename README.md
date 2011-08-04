@@ -114,7 +114,7 @@ Returns `false` if the hub is not found from the feed
 
 ### - getItem()
 
-**nodepie.getItems(i)** → Array
+**nodepie.getItem(i)** → Array
 
 Where
 
