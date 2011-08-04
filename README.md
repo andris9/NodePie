@@ -18,7 +18,7 @@ Tested against [Wordpress](http://wordpress.com/), [Blogger](http://www.blogger.
 Issues
 ------
 
-[xml2json](https://github.com/buglabs/node-xml2json) on which NodePie depends on has a bug with CDATA text elements. Until it is fixed it is better to use
+[xml2json](https://github.com/buglabs/node-xml2json) module which NodePie depends on has a bug with CDATA text elements. Until it is fixed it is better to use
 a [patched version](https://github.com/andris9/node-xml2json) of the same library.
 
 Usage
