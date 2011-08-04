@@ -2,8 +2,27 @@ var xmlparser = require('xml2json');
 
 module.exports = NodePie;
 
+/************* FEED *************/
+
+/**
+ * new NodePie(xml [, options])
+ * - xml (String | Buffer): Feed XML data
+ * - options (Object): options object
+ * 
+ * Generates a NodePie object for parsing RSS/Atom feed data
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     console.log(np.getTitle());
+ * 
+ *     np.getItems().forEach(function(item){
+ *         console.log(item.getTitle());
+ *     });
+ **/
 function NodePie(xml, options){
-    this.xml = (xml || "").trim();
+    this.xml = (xml || "").trim();
     this.options = options || {};
     
     this.feed;
@@ -17,6 +36,15 @@ function NodePie(xml, options){
     this._item_count = false;
 }
 
+/************* FEED CONSTRUCTOR PROPERTIES/METHODS *************/
+
+/**
+ * NodePie.NS -> Object
+ * 
+ * Holds a list of known XML namespaces for parsing certain objects, 
+ * for example the WFW namespace declares a wfw:commentRSS element which
+ * includes comments feed for the post
+ **/
 NodePie.NS = {
     WFW:     'http://wellformedweb.org/CommentAPI/',
     DC:      'http://purl.org/dc/elements/1.1/',
@@ -24,6 +52,11 @@ NodePie.NS = {
     ATOM10:  'http://www.w3.org/2005/Atom'
 }
 
+/**
+ * NodePie.HTMLEntities -> Object
+ * 
+ * Hash map to convert HTML entities into unicode symbols
+ **/
 NodePie.HTMLEntities = {
     nbsp: " ",   iexcl: "¡",  cent: "¢",   pound: "£",  curren: "¤",
     yen: "¥",    brvbar: "¦", sect: "§",   uml: "¨",    copy: "©",
@@ -47,7 +80,13 @@ NodePie.HTMLEntities = {
     ucirc: "û",  uuml: "ü",   yacute: "ý", thorn: "þ",  yuml: "ÿ"
 }
 
-NodePie.decodeHTMLEntities = function(text){
+/**
+ * NodePie._decodeHTMLEntities(text) -> String
+ * - text (String): text to decode
+ * 
+ * Decodes any HTML entities in a string into their unicode form
+ **/
+NodePie._decodeHTMLEntities = function(text){
     return text.replace(/&#(\d{2,4});/g, function(o, nr){
         if(nr!="173"){ // keep &shy;
             return String.fromCharCode(nr);
@@ -55,54 +94,19 @@ NodePie.decodeHTMLEntities = function(text){
             return o;
         }
     }).replace(/&([a-zA-Z]+([0-9]+)?);/g, function(o, code){
-        return NodePie.HTMLEntities[code] || o;
+        return NodePie.HTMLEntities[code] || o;
     });
 }
 
-NodePie.prototype._applyXMLPatches = function(){
-}
-
-NodePie.prototype._checkType = function(){
-    var root_keys = Object.keys(this.feed), key;
-    
-    for(var i=0, len = root_keys.length; i<len; i++){
-        
-        key = root_keys[i];
-        
-        if(typeof this.feed[key] != "object" || Array.isArray(this.feed[key])){
-            continue;
-        }
-        
-        if(key.trim().toLowerCase() == "rdf" || key.trim().substr(-4).toLowerCase() == ":rdf"){
-            this.feedType = "rdf";
-            this.rootElement = this.feed[root_keys[i]];
-            this.channelElement = this.rootElement["channel"] || {};
-            this.itemsElement = this.rootElement["item"] || [];
-            break;
-        }
-        
-        if(key.trim().toLowerCase() == "feed"){
-            this.feedType = "atom";
-            this.rootElement = this.feed[root_keys[i]];
-            this.channelElement = this.rootElement || {};
-            this.itemsElement = this.rootElement["entry"] || [];
-            break;
-        }
-        
-        if(key.trim().toLowerCase() == "rss"){
-            this.feedType = "rss";
-            this.rootElement = this.feed[root_keys[i]];
-            this.channelElement = this.rootElement["channel"] || {};
-            this.itemsElement = this.channelElement["item"] || [];
-            break;
-        }
-    }
-    
-    if(!this.rootElement){
-        throw new Error("Invalid feed!");
-    }
-}
-
+/**
+ * NodePie._walkForNS(node, that[, depth]) -> undefined
+ * - node (Object): object to check for
+ * - that (Object): current context
+ * - depth Number): How deep are we
+ * 
+ * Walks all the feed object nodes to populate XML namespace object
+ * NodePie#namespaces
+ **/
 NodePie._walkForNS = function(node, that, depth){
     depth  = depth || 0;
     
@@ -123,16 +127,90 @@ NodePie._walkForNS = function(node, that, depth){
     }
 }
 
+/************* FEED LEVEL PRIVATE METHODS *************/
+
+/**
+ * NodePie#_fetchNamespaces() -> undefined
+ * 
+ * Populates NodePie#namespaces object with used namespaces
+ **/
 NodePie.prototype._fetchNamespaces = function(){
     if(this.rootElement){
         NodePie._walkForNS(this.rootElement, this);
     }
 }
 
-NodePie.prototype._formatStr = function(str){
-    return this.options.keepHTMLEntities ? str : NodePie.decodeHTMLEntities(str);
+/**
+ * NodePie#_applyXMLPatches() -> undefined
+ * 
+ * Not used. Meant for modifying the xml before it is parsed.
+ **/
+NodePie.prototype._applyXMLPatches = function(){}
+
+/**
+ * NodePie#_checkType() -> undefined
+ * 
+ * Detects the format of the feed (RSS, Atom or RDF), finds root elements,
+ * entry arrays etc.
+ **/
+NodePie.prototype._checkType = function(){
+    var root_keys = Object.keys(this.feed), key;
+    
+    for(var i=0, len = root_keys.length; i<len; i++){
+        
+        key = root_keys[i];
+        
+        if(typeof this.feed[key] != "object" || Array.isArray(this.feed[key])){
+            continue;
+        }
+        
+        if(key.trim().toLowerCase() == "rdf" || key.trim().substr(-4).toLowerCase() == ":rdf"){
+            this.feedType = "rdf";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement["channel"] || {};
+            this.itemsElement = this.rootElement["item"] || [];
+            break;
+        }
+        
+        if(key.trim().toLowerCase() == "feed"){
+            this.feedType = "atom";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement || {};
+            this.itemsElement = this.rootElement["entry"] || [];
+            break;
+        }
+        
+        if(key.trim().toLowerCase() == "rss"){
+            this.feedType = "rss";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement["channel"] || {};
+            this.itemsElement = this.channelElement["item"] || [];
+            break;
+        }
+    }
+    
+    if(!this.rootElement){
+        throw new Error("Invalid feed!");
+    }
 }
 
+/**
+ * NodePie#_formatStr(str) -> String
+ * - str (String): string to format
+ * 
+ * Formats a string according to initial options. By default decodes any HTML
+ * entities
+ **/
+NodePie.prototype._formatStr = function(str){
+    return this.options.keepHTMLEntities ? str : NodePie._decodeHTMLEntities(str);
+}
+
+/**
+ * NodePie#_parseContents(str) -> String
+ * - str (String | Object): string or object to fetch text from
+ * 
+ * Fetches text contents from a string or feed text object
+ **/
 NodePie.prototype._parseContents = function(str){
     if(!str){
         return false;
@@ -153,6 +231,18 @@ NodePie.prototype._parseContents = function(str){
     return false;
 }
 
+/************* FEED LEVEL PUBLIC METHODS *************/
+
+/**
+ * NodePie#init() -> undefined
+ * 
+ * Parses XML and fetches any used namespaces from the object
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ **/
 NodePie.prototype.init = function(){
     
     this._applyXMLPatches();
@@ -162,12 +252,33 @@ NodePie.prototype.init = function(){
     this._fetchNamespaces();
 }
 
-
+/**
+ * NodePie#getTitle() -> String | False
+ * 
+ * Fetches the title of the feed
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     title = np.getTitle();
+ **/
 NodePie.prototype.getTitle = function(){
     var title = this.channelElement.title;
     return this._parseContents(title);
 }
 
+/**
+ * NodePie#getDescription() -> String | False
+ * 
+ * Fetches the description of the feed
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     description = np.getDescription();
+ **/
 NodePie.prototype.getDescription = function(){
     var description = this.channelElement.description || this.channelElement.subtitle ||
          this.channelElement.tagline;
@@ -175,6 +286,17 @@ NodePie.prototype.getDescription = function(){
     return this._parseContents(description);
 }
 
+/**
+ * NodePie#getPermalink() -> String | False
+ * 
+ * Fetches the URL of the blog
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     blog_url = np.getPermalink();
+ **/
 NodePie.prototype.getPermalink = function(){
     var link = this.channelElement.link;
     
@@ -189,17 +311,41 @@ NodePie.prototype.getPermalink = function(){
     return this.getLink();
 }
 
+/**
+ * NodePie#getHub() -> String | False
+ * 
+ * Fetches the PubSubHubbub URL of the blog
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     pubsubhub = np.getHub();
+ **/
 NodePie.prototype.getHub = function(){
     return this.getLink("hub");
 }
 
+/**
+ * NodePie#getLink([rel="alternate"[, type="text/html"]]) -> String | False
+ * - rel (String): link rel
+ * - type (String): link content type
+ * 
+ * Fetches a specified link from the links object
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     edit_link = np.getLink("edit","application/atom+xml");
+ **/
 NodePie.prototype.getLink = function(rel, type){
     var atom10ns = this.namespaces[NodePie.NS.ATOM10];
     
-    rel = rel || "alternate";
-    type = type || "text/html";
+    rel = rel || "alternate";
+    type = type || "text/html";
     
-    var link = (atom10ns && this.channelElement[atom10ns+":link"]) || this.channelElement.link || false;
+    var link = (atom10ns && this.channelElement[atom10ns+":link"]) || this.channelElement.link || false;
     
     if(!link){
         return false;
@@ -214,7 +360,7 @@ NodePie.prototype.getLink = function(rel, type){
     }
     
     if(typeof link == "object" && !Array.isArray(link)){
-        if(rel == link.rel && (!link.type || type==link.type)){
+        if(rel == link.rel && (!link.type || type==link.type)){
             return link.href;
         }else{
             return false;
@@ -223,7 +369,7 @@ NodePie.prototype.getLink = function(rel, type){
     
     if(Array.isArray(link)){
         for(var i=0, len = link.length; i<len; i++){
-            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
+            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
                 return link[i].href;
             }
         }
@@ -232,6 +378,18 @@ NodePie.prototype.getLink = function(rel, type){
     return false;
 }
 
+/**
+ * NodePie#getDate() -> Date | False
+ * 
+ * Fetches the publish date of the feed as a Date object
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     date = np.getDate();
+ *     console.log(date.getFullYear))
+ **/
 NodePie.prototype.getDate = function(){
     var dcns = this.namespaces[NodePie.NS.DC], date;
     
@@ -254,6 +412,17 @@ NodePie.prototype.getDate = function(){
     return date;
 }
 
+/**
+ * NodePie#getItemQuantity([max]) -> Number
+ * 
+ * Fetches the count of the items in the feed or max
+ * 
+ * Usage:
+ * 
+ *     var np = new NodePie(feed);
+ *     np.init();
+ *     item_count = np.getItemQuantity();
+ **/
 NodePie.prototype.getItemQuantity = function(max){
     max = max || 0;
     
@@ -274,11 +443,26 @@ NodePie.prototype.getItemQuantity = function(max){
     return max && max<this._item_count ? max : this._item_count;
 }
 
+/**
+ * NodePie#getItems([start[, length]) -> Array
+ * - start (Number): start index
+ * - length (Number): how many items to fetch
+ * 
+ * Fetches an array of NodePie.Item objects
+ **/
 NodePie.prototype.getItems = function(start, length){
     start = start || 0;
     length = length || this.getItemQuantity();
-    if(length>this.getItemQuantity()){
-        length = this.getItemQuantity();
+    
+    if(start >= this.getItemQuantity()){
+        start = this.getItemQuantity()-1;
+        if(start<0){
+            start = 0;
+        }
+    }
+    
+    if(length > this.getItemQuantity() - start){
+        length = this.getItemQuantity() - start;
     }
     
     var items = [];
@@ -288,6 +472,12 @@ NodePie.prototype.getItems = function(start, length){
     return items;
 }
 
+/**
+ * NodePie#getItem(i) -> NodePie.Item | False
+ * - i (Number): item index
+ * 
+ * Fetches a NodePie.Item object from defined index or false if out of bounds
+ **/
 NodePie.prototype.getItem = function(i){
     i = i && !isNaN(i) && parseInt(Math.abs(i), 10) || 0;
     
@@ -319,22 +509,49 @@ NodePie.prototype.getItem = function(i){
 }
 
 
+/************* ITEM *************/
 
-
-
+/**
+ * new NodePie.Item(element, feed)
+ * - element (Object): entry object
+ * - feed (Object): NodePie parent object
+ * 
+ * Generates a NodePie.Item object. This is done by NodePie#getItem() method
+ * automatically 
+ **/
 NodePie.Item = function(element, feed){
     this.element = element;
     this.feed = feed;
 }
 
+/************* ITEM LEVEL PRIVATE METHODS *************/
+
+/**
+ * NodePie.Item#_parseContents(str) -> String | False
+ * - str (String | Object): a string or an object to parse text from
+ * 
+ * Derivated from NodePie#_parseContents 
+ **/
 NodePie.Item.prototype._parseContents = function(str){
     return this.feed._parseContents.call(this.feed, str);
 }
 
+/**
+ * NodePie.Item#_formatStr(str) -> String | False
+ * - str (String): a string to format
+ * 
+ * Derivated from NodePie#_formatStr 
+ **/
 NodePie.Item.prototype._formatStr = function(str){
     return this.feed._formatStr.call(this.feed, str);
 }
 
+/**
+ * NodePie.Item#_parseAuthor(str) -> String
+ * - str (String | Object): author string value
+ * 
+ * Parser the author name from "e-mail (name)" string
+ **/
 NodePie.Item.prototype._parseAuthor = function(author){
     // email (name)
     var name;
@@ -345,11 +562,25 @@ NodePie.Item.prototype._parseAuthor = function(author){
     return this._formatStr(author);
 }
 
+/************* ITEM LEVEL PUBLIC METHODS *************/
+
+/**
+ * NodePie.Item#getLink([rel="alternate"[, type="text/html"]]) -> String | False
+ * - rel (String): link rel
+ * - type (String): link content type
+ * 
+ * Fetches a specified link from the links object
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     permalink = item.getLink("alternate","text/html");
+ **/
 NodePie.Item.prototype.getLink = function(rel, type){
-    rel = rel || "alternate";
-    type = type || "text/html";
+    rel = rel || "alternate";
+    type = type || "text/html";
     
-    var link = this.element.link || false;
+    var link = this.element.link || false;
     
     if(!link){
         return false;
@@ -364,7 +595,7 @@ NodePie.Item.prototype.getLink = function(rel, type){
     }
     
     if(typeof link == "object" && !Array.isArray(link)){
-        if(rel == link.rel && (!link.type || type==link.type)){
+        if(rel == link.rel && (!link.type || type==link.type)){
             return link.href;
         }else{
             return false;
@@ -373,7 +604,7 @@ NodePie.Item.prototype.getLink = function(rel, type){
     
     if(Array.isArray(link)){
         for(var i=0, len = link.length; i<len; i++){
-            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
+            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
                 return link[i].href;
             }
         }
@@ -382,10 +613,46 @@ NodePie.Item.prototype.getLink = function(rel, type){
     return false;
 }
 
+/**
+ * NodePie.Item#getPermalink() -> String | False
+ * 
+ * Fetches a permalink to the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     permalink = item.getPermalink();
+ **/
 NodePie.Item.prototype.getPermalink = function(){
     return this.getLink("alternate", "text/html");
 }
 
+/**
+ * NodePie.Item#getAuthor() -> String | False
+ * 
+ * Fetches the (first) author of the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     author = item.getAuthor();
+ **/
+NodePie.Item.prototype.getAuthor = function(){
+    var authors = this.getAuthors();
+    return authors && authors[0];
+}
+
+/**
+ * NodePie.Item#getAuthors() -> Array
+ * 
+ * Fetches an array of authors of the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     authors = item.getAuthors();
+ *     console.log(author[0]);
+ **/
 NodePie.Item.prototype.getAuthors = function(){
     var author, authors = [], dcns = this.feed.namespaces[NodePie.NS.DC];
     
@@ -417,16 +684,32 @@ NodePie.Item.prototype.getAuthors = function(){
     return false;
 }
 
-NodePie.Item.prototype.getAuthor = function(){
-    var authors = this.getAuthors();
-    return authors && authors[0];
-}
-
+/**
+ * NodePie.Item#getTitle() -> String | False
+ * 
+ * Fetches the title of the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     title = item.getTitle();
+ **/
 NodePie.Item.prototype.getTitle = function(){
     var title = this.element.title;
     return this._parseContents(title);
 }
 
+/**
+ * NodePie.Item#getTitle() -> Date | False
+ * 
+ * Fetches the date of the post as a Date object
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     date = item.getDate();
+ *     console.log(date.getFullYear());
+ **/
 NodePie.Item.prototype.getDate = function(){
     var dcns = this.feed.namespaces[NodePie.NS.DC], date;
     
@@ -449,6 +732,16 @@ NodePie.Item.prototype.getDate = function(){
     return date;
 }
 
+/**
+ * NodePie.Item#getDescription() -> String | False
+ * 
+ * Fetches the description of the post (prefers summaries)
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     description = item.getDescription();
+ **/
 NodePie.Item.prototype.getDescription = function(){
     var str, cns = this.feed.namespaces[NodePie.NS.COTENT];
     
@@ -458,6 +751,16 @@ NodePie.Item.prototype.getDescription = function(){
     return this._parseContents(str);
 }
 
+/**
+ * NodePie.Item#getContents() -> String | False
+ * 
+ * Fetches the contents of the post (prefers full text)
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     contents = item.getContents();
+ **/
 NodePie.Item.prototype.getContents = function(){
     var str, cns = this.feed.namespaces[NodePie.NS.CONTENT];
     
@@ -467,6 +770,31 @@ NodePie.Item.prototype.getContents = function(){
     return this._parseContents(str);
 }
 
+/**
+ * NodePie.Item#getCategory() -> String | False
+ * 
+ * Fetches the (first) category of the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     category = item.getCategory();
+ **/
+NodePie.Item.prototype.getCategory = function(){
+    var categories = this.getCategories();
+    return categories && categories[0] || false;
+}
+
+/**
+ * NodePie.Item#getCategories() -> Array | False
+ * 
+ * Fetches an array of categories of the post
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     categories = item.getCategories();
+ **/
 NodePie.Item.prototype.getCategories = function(){
     var category, categories = [], dcns = this.feed.namespaces[NodePie.NS.DC];
     
@@ -510,11 +838,23 @@ NodePie.Item.prototype.getCategories = function(){
     return false;
 }
 
-NodePie.Item.prototype.getCategory = function(){
-    var categories = this.getCategories();
-    return categories && categories[0] || false;
-}
-
+/**
+ * NodePie.Item#getComments() -> Object | False
+ * 
+ * Fetches an object containing links to the HTML comments page and to an
+ * Atom/RSS feed of comments for the post
+ * 
+ *     {
+ *         html: "http://link_to_html_page",
+ *         feed: "http://link_to_comments_feed"
+ *     }
+ * 
+ * Usage:
+ * 
+ *     var item = np.getItem(0);
+ *     comments = item.getComments();
+ *     console.log("See all comments: " + comments.html);
+ **/
 NodePie.Item.prototype.getComments = function(){
     var wfwns = this.feed.namespaces[NodePie.NS.WFW],
         html, feed;
