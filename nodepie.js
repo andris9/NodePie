@@ -1,0 +1,536 @@
+var xmlparser = require('xml2json');
+
+module.exports = NodePie;
+
+function NodePie(xml, options){
+    this.xml = (xml || "").trim();
+    this.options = options || {};
+    
+    this.feed;
+    this.rootElement;
+    this.channelElement;
+    this.itemsElement;
+    this.feedType;
+    this.namespaces = {};
+    
+    this._items = {};
+    this._item_count = false;
+}
+
+NodePie.NS = {
+    WFW:     'http://wellformedweb.org/CommentAPI/',
+    DC:      'http://purl.org/dc/elements/1.1/',
+    CONTENT: 'http://purl.org/rss/1.0/modules/content/',
+    ATOM10:  'http://www.w3.org/2005/Atom'
+}
+
+NodePie.HTMLEntities = {
+    nbsp: " ",   iexcl: "¡",  cent: "¢",   pound: "£",  curren: "¤",
+    yen: "¥",    brvbar: "¦", sect: "§",   uml: "¨",    copy: "©",
+    ordf: "ª",   laquo: "«",  not: "¬",    reg: "®",    macr: "¯",
+    deg: "°",    plusmn: "±", sup2: "²",   sup3: "³",   acute: "´",
+    micro: "µ",  para: "¶",   middot: "·", cedil: "¸",  sup1: "¹",
+    ordm: "º",   raquo: "»",  frac14: "¼", frac12: "½", frac34: "¾",
+    iquest: "¿", times: "×",  divide: "÷", Agrave: "À",
+    Aacute: "Á", Acirc: "Â",  Atilde: "Ã", Auml: "Ä",
+    Aring: "Å",  AElig: "Æ",  Ccedil: "Ç", Egrave: "È",
+    Eacute: "É", Ecirc: "Ê",  Euml: "Ë",   Igrave: "Ì", Iacute: "Í",
+    Icirc: "Î",  Iuml: "Ï",   ETH: "Ð",    Ntilde: "Ñ", Ograve: "Ò",
+    Oacute: "Ó", Ocirc: "Ô",  Otilde: "Õ", Ouml: "Ö",   Oslash: "Ø",
+    Ugrave: "Ù", Uacute: "Ú", Ucirc: "Û",  Uuml: "Ü",   Yacute: "Ý",
+    THORN: "Þ",  szlig: "ß",  agrave: "à", aacute: "á", acirc: "â",
+    atilde: "ã", auml: "ä",   aring: "å",  aelig: "æ",  ccedil: "ç",
+    egrave: "è", eacute: "é", ecirc: "ê",  euml: "ë",   igrave: "ì",
+    iacute: "í", icirc: "î",  iuml: "ï",   eth: "ð",    ntilde: "ñ",
+    ograve: "ò", oacute: "ó", ocirc: "ô",  otilde: "õ",
+    ouml: "ö",   oslash: "ø", ugrave: "ù", uacute: "ú",
+    ucirc: "û",  uuml: "ü",   yacute: "ý", thorn: "þ",  yuml: "ÿ"
+}
+
+NodePie.decodeHTMLEntities = function(text){
+    return text.replace(/&#(\d{2,4});/g, function(o, nr){
+        if(nr!="173"){ // keep &shy;
+            return String.fromCharCode(nr);
+        }else{
+            return o;
+        }
+    }).replace(/&([a-zA-Z]+([0-9]+)?);/g, function(o, code){
+        return NodePie.HTMLEntities[code] || o;
+    });
+}
+
+NodePie.prototype._applyXMLPatches = function(){
+}
+
+NodePie.prototype._checkType = function(){
+    var root_keys = Object.keys(this.feed), key;
+    
+    for(var i=0, len = root_keys.length; i<len; i++){
+        
+        key = root_keys[i];
+        
+        if(typeof this.feed[key] != "object" || Array.isArray(this.feed[key])){
+            continue;
+        }
+        
+        if(key.trim().toLowerCase() == "rdf" || key.trim().substr(-4).toLowerCase() == ":rdf"){
+            this.feedType = "rdf";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement["channel"] || {};
+            this.itemsElement = this.rootElement["item"] || [];
+            break;
+        }
+        
+        if(key.trim().toLowerCase() == "feed"){
+            this.feedType = "atom";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement || {};
+            this.itemsElement = this.rootElement["entry"] || [];
+            break;
+        }
+        
+        if(key.trim().toLowerCase() == "rss"){
+            this.feedType = "rss";
+            this.rootElement = this.feed[root_keys[i]];
+            this.channelElement = this.rootElement["channel"] || {};
+            this.itemsElement = this.channelElement["item"] || [];
+            break;
+        }
+    }
+    
+    if(!this.rootElement){
+        throw new Error("Invalid feed!");
+    }
+}
+
+NodePie._walkForNS = function(node, that, depth){
+    depth  = depth || 0;
+    
+    if(depth>7){
+        return;
+    }
+    
+    var keys = Object.keys(node), key;
+    for(var i=0, len = keys.length; i<len; i++){
+        key = keys[i];
+        if(typeof node[key] == "string"){
+            if(key.trim().substr(0,6).toLowerCase() == "xmlns:"){
+                that.namespaces[node[key]] = key.trim().substr(6);
+            }
+        }else if(node[key] && typeof node[key] == "object"){
+            NodePie._walkForNS(node[key], that, depth+1);
+        }
+    }
+}
+
+NodePie.prototype._fetchNamespaces = function(){
+    if(this.rootElement){
+        NodePie._walkForNS(this.rootElement, this);
+    }
+}
+
+NodePie.prototype._formatStr = function(str){
+    return this.options.keepHTMLEntities ? str : NodePie.decodeHTMLEntities(str);
+}
+
+NodePie.prototype._parseContents = function(str){
+    if(!str){
+        return false;
+    }
+    
+    if(typeof str == "string"){
+        str = str.trim();
+        return str && this._formatStr(str) || false;
+    }
+    
+    if(typeof str == "object"){
+        if(typeof str.$t == "string"){
+            str.$t = str.$t.trim();
+            return str.$t && this._formatStr(str.$t) || false;
+        }
+    }
+    
+    return false;
+}
+
+NodePie.prototype.init = function(){
+    
+    this._applyXMLPatches();
+    
+    this.feed = xmlparser.toJson(this.xml, {object: true});
+    this._checkType();
+    this._fetchNamespaces();
+}
+
+
+NodePie.prototype.getTitle = function(){
+    var title = this.channelElement.title;
+    return this._parseContents(title);
+}
+
+NodePie.prototype.getDescription = function(){
+    var description = this.channelElement.description || this.channelElement.subtitle ||
+         this.channelElement.tagline;
+    
+    return this._parseContents(description);
+}
+
+NodePie.prototype.getPermalink = function(){
+    var link = this.channelElement.link;
+    
+    if(!link){
+        return false;
+    }
+    
+    if(typeof link=="string"){
+        return link.trim();
+    }
+    
+    return this.getLink();
+}
+
+NodePie.prototype.getHub = function(){
+    return this.getLink("hub");
+}
+
+NodePie.prototype.getLink = function(rel, type){
+    var atom10ns = this.namespaces[NodePie.NS.ATOM10];
+    
+    rel = rel || "alternate";
+    type = type || "text/html";
+    
+    var link = (atom10ns && this.channelElement[atom10ns+":link"]) || this.channelElement.link || false;
+    
+    if(!link){
+        return false;
+    }
+    
+    if(typeof link == "string"){
+        if(rel == "alternate" && type == "text/html"){
+            return link.trim();
+        }else{
+            return false;
+        }
+    }
+    
+    if(typeof link == "object" && !Array.isArray(link)){
+        if(rel == link.rel && (!link.type || type==link.type)){
+            return link.href;
+        }else{
+            return false;
+        }
+    }
+    
+    if(Array.isArray(link)){
+        for(var i=0, len = link.length; i<len; i++){
+            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
+                return link[i].href;
+            }
+        }
+    }
+    
+    return false;
+}
+
+NodePie.prototype.getDate = function(){
+    var dcns = this.namespaces[NodePie.NS.DC], date;
+    
+    date = this.channelElement.lastBuildDate || this.channelElement.updated || 
+            (dcns && this.channelElement[dcns+":date"]) || false;
+    
+    if(!date){
+        return false;
+    }
+    
+    date = new Date(date);
+    if(!date.getFullYear()){
+        return false;
+    }
+    
+    if(date.getTime() > Date.now()){
+        return new Date();
+    }
+    
+    return date;
+}
+
+NodePie.prototype.getItemQuantity = function(max){
+    max = max || 0;
+    
+    if(this._item_count !== false){
+        return max && max<this._item_count ? max : this._item_count;
+    }
+    
+    this._item_count = 0;
+    
+    if(!this.itemsElement){
+        this._item_count = 0;
+    }else if(Array.isArray(this.itemsElement)){
+        this._item_count = this.itemsElement.length;
+    }else if(typeof this.itemsElement == "object"){
+        this._item_count = 1;
+    }
+    
+    return max && max<this._item_count ? max : this._item_count;
+}
+
+NodePie.prototype.getItems = function(start, length){
+    start = start || 0;
+    length = length || this.getItemQuantity();
+    if(length>this.getItemQuantity()){
+        length = this.getItemQuantity();
+    }
+    
+    var items = [];
+    for(var i=start; i<length; i++){
+        items.push(this.getItem(i));
+    }
+    return items;
+}
+
+NodePie.prototype.getItem = function(i){
+    i = i && !isNaN(i) && parseInt(Math.abs(i), 10) || 0;
+    
+    if(this._items[i]){
+        return this._items[i];
+    }
+    
+    if(!this.itemsElement){
+        return false;
+    }
+    
+    if(Array.isArray(this.itemsElement)){
+        if(this.itemsElement.length > i){
+            this._items[i] = new NodePie.Item(this.itemsElement[i], this);
+            return this._items[i];
+        }else{
+            return false;
+        }
+    }
+
+    if(typeof this.itemsElement == "object"){
+        if(i === 0){
+            this._items[i] = new NodePie.Item(this.itemsElement, this);
+            return this._items[i];
+        }
+    }
+    
+    return false;
+}
+
+
+
+
+
+NodePie.Item = function(element, feed){
+    this.element = element;
+    this.feed = feed;
+}
+
+NodePie.Item.prototype._parseContents = function(str){
+    return this.feed._parseContents.call(this.feed, str);
+}
+
+NodePie.Item.prototype._formatStr = function(str){
+    return this.feed._formatStr.call(this.feed, str);
+}
+
+NodePie.Item.prototype._parseAuthor = function(author){
+    // email (name)
+    var name;
+    if(name = author.trim().match(/^[\w.-]+@[\w.-]+ \(([^)]+)\)$/)){
+        author = (name[1] || "").trim();
+    }
+    
+    return this._formatStr(author);
+}
+
+NodePie.Item.prototype.getLink = function(rel, type){
+    rel = rel || "alternate";
+    type = type || "text/html";
+    
+    var link = this.element.link || false;
+    
+    if(!link){
+        return false;
+    }
+    
+    if(typeof link == "string"){
+        if(rel == "alternate" && type == "text/html"){
+            return link.trim();
+        }else{
+            return false;
+        }
+    }
+    
+    if(typeof link == "object" && !Array.isArray(link)){
+        if(rel == link.rel && (!link.type || type==link.type)){
+            return link.href;
+        }else{
+            return false;
+        }
+    }
+    
+    if(Array.isArray(link)){
+        for(var i=0, len = link.length; i<len; i++){
+            if(rel == link[i].rel && (!link[i].type || type==link[i].type)){
+                return link[i].href;
+            }
+        }
+    }
+    
+    return false;
+}
+
+NodePie.Item.prototype.getPermalink = function(){
+    return this.getLink("alternate", "text/html");
+}
+
+NodePie.Item.prototype.getAuthors = function(){
+    var author, authors = [], dcns = this.feed.namespaces[NodePie.NS.DC];
+    
+    if(this.element.author){
+        author = this.element.author;
+    }else if(this.element.creator){
+        author = this.element.creator;
+    }else if(dcns && this.element[dcns+":creator"]){
+        author = this.element[dcns+":creator"];
+    }
+    
+    if(typeof author == "string"){
+        return [this._parseAuthor(author)];
+    }
+    
+    if(typeof author == "object"){
+        if(Array.isArray(author)){
+            for(var i=0, len = author.length; i<len; i++){
+                if(author[i] && author[i].name){
+                    authors.push(author[i].name);
+                }
+            }
+            return authors.length ? authors : false;
+        }else if(typeof author.name == "string"){
+            return [this._parseAuthor(author.name)];
+        }
+    }
+    
+    return false;
+}
+
+NodePie.Item.prototype.getAuthor = function(){
+    var authors = this.getAuthors();
+    return authors && authors[0];
+}
+
+NodePie.Item.prototype.getTitle = function(){
+    var title = this.element.title;
+    return this._parseContents(title);
+}
+
+NodePie.Item.prototype.getDate = function(){
+    var dcns = this.feed.namespaces[NodePie.NS.DC], date;
+    
+    date = this.element.pubDate || this.element.published || this.element.created || this.element.issued || 
+            this.element.updated || this.element.modified || (dcns && this.element[dcns+":date"]) || false;
+    
+    if(!date){
+        return false;
+    }
+    
+    date = new Date(date);
+    if(!date.getFullYear()){
+        return false;
+    }
+    
+    if(date.getTime() > Date.now()){
+        return new Date();
+    }
+    
+    return date;
+}
+
+NodePie.Item.prototype.getDescription = function(){
+    var str, cns = this.feed.namespaces[NodePie.NS.COTENT];
+    
+    str = this.element.description || this.element.summary || 
+        this.element.content || (cns && this.element[cns+":encoded"]) || "";
+    
+    return this._parseContents(str);
+}
+
+NodePie.Item.prototype.getContents = function(){
+    var str, cns = this.feed.namespaces[NodePie.NS.CONTENT];
+    
+    str = this.element.content || (cns && this.element[cns+":encoded"]) || 
+        this.element.description || this.element.summary || "";
+    
+    return this._parseContents(str);
+}
+
+NodePie.Item.prototype.getCategories = function(){
+    var category, categories = [], dcns = this.feed.namespaces[NodePie.NS.DC];
+    
+    category = this.element.category || this.element[dcns+":subject"] || false;
+    
+    if(!category){
+        return false;
+    }
+    
+    if(typeof category == "string"){
+        category = category.trim();
+        return category && [this._formatStr(category)] || false;
+    }
+    
+    if(typeof category == "object" && !Array.isArray(category)){
+         category = category.term || category.$t || false;
+         if(!category){
+             return false;
+         }
+         category = category.trim();
+         return category && [this._formatStr(category)] || false
+    }
+    
+    if(Array.isArray(category)){
+        for(var i=0, len = category.length; i<len; i++){
+            if(typeof category[i] == "string"){
+                if(category[i].trim()){
+                    categories.push(category[i].trim());
+                }
+                continue;
+            }
+            if(typeof category[i] == "object"){
+                if((category[i].term || category[i].$t || "").trim()){
+                    categories.push(this._formatStr((category[i].term || category[i].$t || "").trim()));
+                }
+            }
+        }
+        return categories.length && categories || false;
+    }
+    
+    return false;
+}
+
+NodePie.Item.prototype.getCategory = function(){
+    var categories = this.getCategories();
+    return categories && categories[0] || false;
+}
+
+NodePie.Item.prototype.getComments = function(){
+    var wfwns = this.feed.namespaces[NodePie.NS.WFW],
+        html, feed;
+    
+    if(this.element.comments){
+        html = this.element.comments;
+    }else{
+        html = this.getLink("replies", "text/html") || false;
+    }
+    
+    if(wfwns && this.element[wfwns+":commentRss"]){
+        feed = this.element[wfwns+":commentRss"];
+    }else{
+        feed = this.getLink("replies", "application/atom+xml") || false; 
+    }
+    
+    return feed || html ? {feed: feed, html: html} : false;
+}
+
