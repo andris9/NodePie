@@ -31,7 +31,7 @@ Usage
     console.log(feed.getTitle());
     
     // output the titles for the first 3 entries
-    feed.getItems(3).forEach(function(item){
+    feed.getItems(0, 3).forEach(function(item){
         console.log(item.getTitle());
     });
     
