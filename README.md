@@ -46,7 +46,7 @@ Constructor
 Where
 
   * `xml` is a String or Buffer containing the feed XML
-  * `options` is am optional options object
+  * `options` is an optional options object
 
 Constructor generates a NodePie object for parsing the feed
 
