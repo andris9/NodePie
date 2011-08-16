@@ -1,7 +1,7 @@
 {
     "name": "nodepie",
     "description": "RSS/Atom parser for Node.JS",
-    "version": "0.1.1",
+    "version": "0.2.0",
     "author" : "Andris Reinman",
     "maintainers":[
         {
@@ -22,7 +22,8 @@
         }
     ],
     "dependencies": {
-        "xml2json":"*"
+        "xml2json":"*",
+        "iconv": "*"
     },
     "engine": [ "node >=0.3.0" ],
     "keywords": ["rss", "feed", "atom"]

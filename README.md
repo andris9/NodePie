@@ -11,7 +11,7 @@ Installation
 Compatibility
 -------------
 
-Good for UTF-8 encoded RSS0.92, RSS2.0, RDF and Atom1.0 feeds. 
+Good for RSS0.92, RSS2.0, RDF and Atom1.0 feeds. 
 
 Tested against [Wordpress](http://wordpress.com/), [Blogger](http://www.blogger.com/) and [Feedburner](http://feedburner.com/) feeds.
 
@@ -103,6 +103,18 @@ Usage:
     description = feed.getDescription();
 
 Returns `false` if the description is not found from the feed
+
+**nodepie.getEncoding()** → String
+
+Returns the encoding for the source feed
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    source_encoding = feed.getEncoding();
+
+NB! The result is always UTF-8, this only indicates the encoding of the source feed file.
 
 ### - getHub()
 
