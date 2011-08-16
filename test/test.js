@@ -17,6 +17,7 @@ request(feed_url, function(error, xml){
     console.log(new Array((np.getTitle() || "").length + 1).join("="));
     console.log(np.getDescription());
     console.log(np.getPermalink());
+    console.log("Source encoding: " + np.getEncoding());
     
     for(var i=0, len = np.getItemQuantity(3); i<len; i++){
         item = np.getItem(i);
@@ -45,11 +46,11 @@ function request(url, callback){
         
         var body = "";
         res.on("data", function(chunk){
-            body += chunk.toString("utf-8");
+            body += chunk.toString("binary");
         });
         
         res.on("end", function(){
-            callback(null, body);
+            callback(null, new Buffer(body, "binary"));
         });
         
         res.on("error", function(e){
