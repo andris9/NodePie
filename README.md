@@ -55,7 +55,7 @@ Usage
     var NodePie = require("nodepie")
     feed = new NodePie(xml_contents);
 
-**NB!** `xml` should be a Buffer if the XML is not in UTF-8 encoding, if this value is a String it is considered as UTF-8 automatically and the encoding is not converted.
+**NB!** `xml` should be a Buffer if the XML is not in UTF-8 encoding. If `xml` is a String it is automatically considered as UTF-8 and the encoding is not converted.
 
 Feed level methods
 ------------------
