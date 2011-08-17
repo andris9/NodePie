@@ -57,6 +57,10 @@ Usage
 
 **NB!** `xml` should be a Buffer if the XML is not in UTF-8 encoding. If `xml` is a String it is automatically considered as UTF-8 and the encoding is not converted.
 
+You can overwrite automatic detection of the encoding by setting explicitly it with an options property:
+
+    var np = new NodePie(xml_buffer, {encoding: "ISO-8859-1"});
+
 Feed level methods
 ------------------
 
