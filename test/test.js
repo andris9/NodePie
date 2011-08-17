@@ -28,8 +28,8 @@ request(feed_url, function(error, xml){
         console.log(item.getPermalink());
         console.log(item.getDescription());
     }
-    
-})
+
+});
 
 function request(url, callback){
     var urlparts = urllib.parse(url),
