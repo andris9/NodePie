@@ -1,0 +1,20 @@
+info it worked if it ends with ok
+verbose cli [ 'node', '/usr/local/bin/npm', 'publish' ]
+info using npm@1.0.18
+info using node@v0.5.4
+verbose config file /root/.npmrc
+verbose config file /usr/local/etc/npmrc
+verbose publish [ '.' ]
+ERR! Could not install: .
+ERR! Error: ENOENT, No such file or directory 'package.json'
+ERR! Report this *entire* log at:
+ERR!     <http://github.com/isaacs/npm/issues>
+ERR! or email it to:
+ERR!     <npm-@googlegroups.com>
+ERR! 
+ERR! System Linux 2.6.18-028stab091.2
+ERR! command "node" "/usr/local/bin/npm" "publish"
+ERR! cwd /root/nodepie/test
+ERR! node -v v0.5.4
+ERR! npm -v 1.0.18
+verbose exit [ 2, true ]
