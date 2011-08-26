@@ -311,6 +311,20 @@ Usage:
 
 Returns `false` if the date is not found from the entry or if it's in invalid format
 
+### - getUpdateDate()
+
+**item.getUpdateDate()** → Date
+
+Fetches the update date of the entry as a Date object
+
+Usage:
+
+    var item = feed.getItem(0);
+    date = item.getUpdateDate();
+    console.log(date.getFullYear());
+
+Falls back to getDate when update date not found or returns `false` if the date is not found from the entry or if it's in invalid format
+
 ### - getDescription()
 
 **item.getDescription()** → String
