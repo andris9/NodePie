@@ -13,11 +13,12 @@ request(feed_url, function(error, xml){
     
     np.init();
     
-    console.log(np.getTitle());
+    console.log("\n" + np.getTitle());
     console.log(new Array((np.getTitle() || "").length + 1).join("="));
-    console.log(np.getDescription());
+    console.log(np.getDescription(),"\n");
     console.log(np.getPermalink());
     console.log("Source encoding: " + np.getEncoding());
+    console.log("Updated", np.getDate());
     
     for(var i=0, len = np.getItemQuantity(3); i<len; i++){
         item = np.getItem(i);
@@ -26,6 +27,7 @@ request(feed_url, function(error, xml){
         console.log(item.getTitle());
         console.log(new Array((item.getTitle() || "").length + 1).join("-"));
         console.log(item.getPermalink());
+        console.log("Created", item.getDate(), "\n");
         console.log(item.getDescription());
     }
 
