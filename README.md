@@ -179,7 +179,10 @@ Usage:
 
     var feed = new NodePie(xml_contents);
     feed.init();
-    total_entries = feed.getItemQuantity();
+    // total items in feed: 10
+    total_entries = feed.getItemQuantity(); // 10
+    total_entries = feed.getItemQuantity(5); // 5
+    total_entries = feed.getItemQuantity(50); // 10
 
 ### - getPermalink()
 
@@ -232,7 +235,7 @@ Returns `false` if no authors are not found from the entry
 
 **item.getAuthors()** → Array
 
-Fetches the authors of the entry
+Fetches the authors (as an array of strings) of the entry
 
 Usage:
 
@@ -256,7 +259,7 @@ Returns `false` if no categories are found from the entry
 
 **item.getCategories()** → Array
 
-Fetches the categories for the entry as an array.
+Fetches the categories (as an array of strings) for the entry.
 
 Usage:
 
@@ -311,20 +314,6 @@ Usage:
 
 Returns `false` if the date is not found from the entry or if it's in invalid format
 
-### - getUpdateDate()
-
-**item.getUpdateDate()** → Date
-
-Fetches the update date of the entry as a Date object
-
-Usage:
-
-    var item = feed.getItem(0);
-    date = item.getUpdateDate();
-    console.log(date.getFullYear());
-
-Falls back to getDate when update date not found or returns `false` if the date is not found from the entry or if it's in invalid format
-
 ### - getDescription()
 
 **item.getDescription()** → String
@@ -363,3 +352,18 @@ Usage:
     title = item.getTitle();
 
 Returns `false` if the title is not found from the entry
+
+### - getUpdateDate()
+
+**item.getUpdateDate()** → Date
+
+Fetches the update date of the entry as a Date object
+
+Usage:
+
+    var item = feed.getItem(0);
+    date = item.getUpdateDate();
+    console.log(date.getFullYear());
+
+Falls back to getDate when update date not found or returns `false` if the date is not found from the entry or if it's in invalid format
+
