@@ -1,7 +1,7 @@
 {
     "name": "nodepie",
     "description": "RSS/Atom parser for Node.JS",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "author" : "Andris Reinman",
     "maintainers":[
         {
@@ -21,9 +21,13 @@
             "url": "http://github.com/andris9/nodepie/blob/master/LICENSE"
         }
     ],
+    "devDependencies": {
+        "nodeunit": "*"
+    },
     "dependencies": {
         "xml2json":"*",
-        "iconv": "*"
+        "iconv": "*",
+        "fetch": "*"
     },
     "engine": [ "node >=0.3.0" ],
     "keywords": ["rss", "feed", "atom"]
