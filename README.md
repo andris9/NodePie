@@ -104,6 +104,8 @@ Usage:
 
 Returns `false` if the description is not found from the feed
 
+### - getEncoding()
+
 **nodepie.getEncoding()** → String
 
 Returns the encoding for the source feed
@@ -129,6 +131,18 @@ Usage:
     hub = feed.getHub();
 
 Returns `false` if the hub is not found from the feed
+
+### - getImage()
+
+**nodepie.getImage()** → String
+
+Returns the URL or the feed image or false if not found
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    imageUrl = feed.getImage();
 
 ### - getItem()
 
