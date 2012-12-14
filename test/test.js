@@ -15,11 +15,12 @@ request(feed_url, function(error, xml){
     
     console.log("\n" + np.getTitle());
     console.log(new Array((np.getTitle() || "").length + 1).join("="));
-    console.log(np.getDescription(),"\n");
-    console.log(np.getPermalink());
-    console.log("Source encoding: " + np.getEncoding());
-    console.log("Updated", np.getDate());
-    console.log("Image", np.getImage());
+    console.log(np.getDescription());
+    console.log("Permalink:", np.getPermalink());
+    console.log("Hub:", np.getHub());
+    console.log("Source encoding:", np.getEncoding());
+    console.log("Updated:", np.getDate());
+    console.log("Image:", np.getImage());
     
     for(var i=0, len = np.getItemQuantity(3); i<len; i++){
         item = np.getItem(i);
