@@ -212,7 +212,20 @@ Usage:
 
 Returns `false` if the url is not found from the feed
 
+### - getSelf()
 
+**nodepie.getSelf()** → String
+
+Fetches the rss/atom url of the current feed (useful when the feed is received from PubSubHubbub)
+
+Usage:
+
+    var feed = new NodePie(xml_contents);
+    feed.init();
+    hub = feed.getSelf();
+
+Returns `false` if the url is not found from the feed. Most probably if you have a hub url in the feed,
+there's also the feed url.
 
 ### - getTitle()
 

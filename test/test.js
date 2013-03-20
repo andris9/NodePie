@@ -17,6 +17,7 @@ request(feed_url, function(error, xml){
     console.log(new Array((np.getTitle() || "").length + 1).join("="));
     console.log(np.getDescription());
     console.log("Permalink:", np.getPermalink());
+    console.log("Feed:", np.getSelf());
     console.log("Hub:", np.getHub());
     console.log("Source encoding:", np.getEncoding());
     console.log("Updated:", np.getDate());
