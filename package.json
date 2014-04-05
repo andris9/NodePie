@@ -25,10 +25,10 @@
     "nodeunit": "*"
   },
   "dependencies": {
-    "xml2json": "*",
-    "fetch": "*",
-    "he": "~0.3.6",
-    "encoding": "~0.1.7"
+    "xml2json": "^0.4.0",
+    "fetch": "^0.3.6",
+    "he": "^0.3.6",
+    "encoding": "^0.1.7"
   },
   "engine": [
     "node >=0.3.0"
