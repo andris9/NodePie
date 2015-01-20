@@ -1,7 +1,7 @@
 {
   "name": "nodepie",
   "description": "RSS/Atom parser for Node.JS",
-  "version": "0.6.5",
+  "version": "0.6.6",
   "author": "Andris Reinman",
   "maintainers": [
     {
